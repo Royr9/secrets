@@ -75,31 +75,60 @@ passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 
-// /////////////////////////////////////////////
+
 
 app.route("/")
 .get( (req,res) =>{
 res.render("home");
 });
-// /////////////////////////
 
 app.route("/login")
-
 .get( (req,res) =>{
 res.render("login");
 })
 
 .post((req,res)=>{
-   
-});
-// ///////////////////////////////
-app.route("/register")
+    const userName = req.body.username.toLowerCase();
+    const userpassword = req.body.password ;
+    User.findOne({email: userName}, (err,foundUser)=>{
+        if (foundUser) {
+            bcrypt.compare(userpassword, foundUser.password, (err, result)=>{
+                if (result === true ) {
+                    res.render("secrets");
+                }else{
+                    res.send("password is invalid")
+                }
+            });         
+        } else {
+            res.send("username invalid")
+        }
+    });
+})
 
+app.route("/register")
 .get( (req,res) =>{
 res.render("register");
 })
-
 .post((req,res)=>{
+    const userEmail = req.body.username.toLowerCase();
+    const userPassword =  req.body.password;
+    bcrypt.hash(userPassword, saltRounds , (err,hash)=>{
+        User.findOne({email: userEmail}, (err,foundUser)=>{
+            if (!foundUser) {
+                const newUser = new User({
+                    email: userEmail , 
+                    password: hash
+                });
+                newUser.save(err=>{
+                    if (!err) {
+                        res.render("secrets");
+                    }
+                });
+            }else{
+                res.send("user name already exits :(")
+            }
+         })   
+    })
 });
 
 
